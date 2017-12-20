@@ -25,7 +25,7 @@ router.post('/entry', function(req, res, next) {
 	client.connect(uri, function (err, db) {
 	    if (err) return next(err);
     	var collection = db.collection('entry');
-    	collection.insertMany(req.body, function(err, result) {
+    	collection.insert(req.body, function(err, result) {
 			return res.json({ result: "success" });
     	});
 	});
