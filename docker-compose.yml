@@ -1,8 +1,6 @@
 version: "2"
 services:
   web:
-  environment:
-      "MONGO_HOST=mongo"
     build: .
     ports:
       - "3000:3000"
@@ -11,6 +9,6 @@ services:
   mongo:
     image: mongo
     volumes:
-      - data/mongodb/db:/data/db
+      - ./data/mongodb/db:/data/db
     ports:
       - "27017:27017"
