@@ -1,34 +1,54 @@
 var express = require('express');
-var router = express.Router();
+var bodyParser = require('body-parser');
 var mongodb = require('mongodb');
-var client = mongodb.MongoClient;
+var MongoClient = mongodb.MongoClient;
 
-var uri = "mongodb://mongo/dummy-app";
+var hostname = process.env.API_HOST | 'localhost';
+var port = process.env.API_PORT || 3000;
+var mongoHost = process.env.MONGO_HOST | 'localhost';
+var uri = "mongodb://"+ mongoHost + ":27017/overkiz";
+const dbName = 'overkizEntries';
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+var app = express();
+
+app.use(bodyParser.json());
+
+app.get('/', function(request, response, next){
+
+    MongoClient.connect(uri, function (err, client) {
+        if (err) return next(err);
+        console.log("connexion ok");
+        const db = client.db(dbName);
+        const collection = db.collection('entry');
+        collection.find({}).toArray(function(err, docs) {
+            if (err) return next(err);
+            response.send(docs);
+        });
+
+        client.close();
+    });
+
 });
 
-router.get('/entry', function(req, res, next) {
-    client.connect(uri, function (err, db) {
-	    if (err) return next(err);
-    	var collection = db.collection('entry');
-    	collection.find({}).toArray(function(err, docs) {
-			if (err) return next(err);
-			return res.json(docs);
-    	});
-	});
+app.post('/', function(request, response, next){
+    console.log(request.body);
+    MongoClient.connect(uri, function (err, client) {
+        if (err) return next(err);
+        console.log("connexion db ok")
+        const db = client.db(dbName);
+        const collection = db.collection('entry');
+        console.log("j'envoie " + request.body + " dans la base");
+        collection.insert({"content": request.body }, function(err, result) {
+            return;
+        });
+        client.close();
+    });
+    response.send(request.body);
+})
+
+
+var server = app.listen(port, function() {
+    console.log('Listening at http://localhost:' + port);
 });
 
-router.post('/entry', function(req, res, next) {
-	client.connect(uri, function (err, db) {
-	    if (err) return next(err);
-    	var collection = db.collection('entry');
-    	collection.insert(req.body, function(err, result) {
-			return res.json({ result: "success" });
-    	});
-	});
-});
 
-module.exports = router;
